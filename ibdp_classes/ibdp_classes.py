@@ -115,7 +115,7 @@ class Queue(_KnowsIfEmpty[T]):
     def dequeue(self) -> T:
         """Removes and returns the element at the front of the queue."""
         if self._elements:
-            x, *self.elements = self._elements
+            x, *self._elements = self._elements
             return x
 
         raise Exception("Attempted to dequeue an empty queue.")
