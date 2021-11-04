@@ -1,3 +1,6 @@
+#! python3
+
+import re, sys, traceback
 from typing import Generic, TypeVar
 
 T = TypeVar("T")
@@ -5,10 +8,21 @@ T = TypeVar("T")
 
 class _Base(Generic[T]):
     def __init__(self, elements: list[T]) -> None:
-        self._elements = elements.copy()
+        self._elements = list(elements)
 
     def __str__(self) -> str:
-        return f"{type(self).__name__}: {self._elements}"
+        if len(self._elements) and isinstance(self._elements[0], str):
+            template = '"[ELEMENT]"'
+        else:
+            template = "[ELEMENT]"
+        elements = (
+            "{ "
+            + ", ".join(template.replace("[ELEMENT]", str(x)) for x in self._elements)
+            + " }"
+            if self._elements
+            else "(empty)"
+        )
+        return f"{type(self).__name__} {elements}"
 
 
 class _KnowsIfEmpty(_Base[T]):
@@ -18,16 +32,7 @@ class _KnowsIfEmpty(_Base[T]):
 
 
 class Array(_Base[T]):
-    """A basic array structure that only allows random access.
-
-    Example:
-
-    ```
-    array = Array(["a", "b", "c"])
-    array[0] = "d"
-    print(array[0])
-    ```
-    """
+    """A basic array structure that only allows random access."""
 
     def __init__(self, elements: list[T]) -> None:
         super().__init__(elements)
@@ -38,6 +43,7 @@ class Array(_Base[T]):
                 self._elements[index] = value
 
             raise Exception("Array index out of bounds.")
+
         raise Exception("Non integer Array index.")
 
     def __getitem__(self, index: int) -> T:
@@ -119,3 +125,266 @@ class Queue(_KnowsIfEmpty[T]):
             return x
 
         raise Exception("Attempted to dequeue an empty queue.")
+
+
+class Pseudocode:
+    """A simple IBDP pseudocode interpreter."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        lines = [line for line in code.split("\n")]
+        r_logic = re.compile(r" AND | OR | NOT ")
+        r_if = re.compile(r"if +(.*) +then")
+        r_else = re.compile(r"else")
+        r_while = re.compile(r"loop +while +(.*)")
+        r_for = re.compile(r"loop +([A-Z][A-Z_0-9]*) +from +([^ ]+) +to +(.+)")
+        r_end = re.compile(r"end +(.+)")
+        r_input_type = re.compile(r"input +([A-Z][A-Z_0-9]) +as +(.*)")
+        r_input = re.compile(r"input +([A-Z][A-Z_0-9])$")
+        r_output = re.compile(r"output +(.*)")
+        r_function = re.compile(r"function +([A-Z][A-Z_0-9]*)\((.*)\)")
+        r_procedure = re.compile(r"procedure +([A-Z][A-Z_0-9]*)\((.*)\)")
+        r_new = re.compile(f"^([A-Z][A-Z_0-9]*) += +new +([^(]+)\((.*)\)")
+        r_string = re.compile(r'"([^"]*)"')
+        r_string_index = re.compile(r"<<<([0-9]+)>>>")
+        r_lower = re.compile(r"[a-z]+")
+        r_equals = re.compile(r"==+")
+
+        # Allowed lowercase in the generated Python.
+        allowed_lower = [
+            "and",
+            "or",
+            "not",
+            "procedure",
+            "function",
+            "return",
+            "if",
+            "else",
+            "loop",
+            "while",
+            "from",
+            "to",
+            "end",
+            "output",
+            "input",
+            "as",
+            "int",
+            "float",
+            "isEmpty",
+            "addItem",
+            "resetNext",
+            "getNext",
+            "hasNext",
+            "push",
+            "pop",
+            "enqueue",
+            "dequeue",
+            "True",
+            "False",
+        ]
+
+        # Code structure stack.
+        stack = list[str]()
+
+        # Replace special symbols and work around IB's choice to use the same
+        # symbol for instantiation and equality.
+        def special(line: str) -> str:
+            for c, r in {
+                "≠": "!=",
+                "≤": "<=",
+                "≥": ">=",
+                "=": "==",
+                "!==": "!=",
+            }.items():
+                line = line.replace(c, r)
+            if m := r_equals.match(line):
+                line = line.replace(m.group(0), "==")
+            return line
+
+        def to_python(line_number: int, line: str) -> str:
+            padding = "  " * len(stack)
+            while m := r_logic.match(line):
+                line = line.replace(m.group(1), m.group(1).lower())
+            for s, r in {
+                "//": "#",
+                " div ": " // ",
+                " mod ": " % ",
+                "true": "True",
+                "TRUE": "True",
+                "false": "False",
+                "FALSE": "False",
+            }.items():
+                line = line.replace(s, r)
+
+            if m := r_if.match(line):
+                stack.append("if")
+                check = line.split("then")
+                if len(check) != 2 or check[1].strip():
+                    sys.stderr.write(
+                        f"* Error in line {line_number + 1}: '{line}'\n  Should be if the form: if [condition] then"
+                    )
+                    exit(-1)
+                return special(f"{padding}if {m.group(1)}:")
+
+            if m := r_else.match(line):
+                if line != "else":
+                    sys.stderr.write(
+                        f"""* Error in line {line_number + 1}: '{line}'\n  Keyword 'else' should be on its own\n"""
+                    )
+                    exit(-1)
+                return f"{padding[0:-2]}else:"
+
+            if m := r_while.match(line):
+                stack.append("loop")
+                return special(f"{padding}while {m.group(1)}:")
+
+            if m := r_for.match(line):
+                stack.append("loop")
+                return f"{padding}for {m.group(1)} in range({m.group(2)}, {m.group(3)} + 1):"
+
+            if m := r_end.match(line):
+                pop = stack.pop()
+                if pop != m.group(1):
+                    sys.stderr.write(
+                        f"* Error in line {line_number + 1}: '{line}'\n  Expecting: end {pop}\n"
+                    )
+                    exit(-1)
+                return ""
+
+            if m := r_input_type.match(line):
+                return f"{padding}{m.group(1)} = {m.group(2)}(input())"
+
+            if m := r_input.match(line):
+                return f"{padding}{m.group(1)} = input()"
+
+            if m := r_output.match(line):
+                return f"{padding}print({m.group(1)})"
+
+            if m := r_function.match(line):
+                stack.append("function")
+                return f"{padding}def {m.group(1)}({m.group(2)}):"
+
+            if m := r_procedure.match(line):
+                stack.append("procedure")
+                return f"{padding}def {m.group(1)}({m.group(2)}):"
+
+            if m := r_new.match(line):
+                elements = [s.strip() for s in m.group(3).split(",") if s]
+                return f"""{padding}{m.group(1)} = {m.group(2)}({"[" + ", ".join(elements) + "]" if elements else ""})"""
+
+            # Remove strings.
+            strings = list[str]()
+            while m := r_string.match(line):
+                i = len(strings)
+                line = line.replace(m.group(1), f"<<<{i}>>>")
+
+            start = 0
+            while m := r_lower.match(line, start):
+                start = m.end()
+                if m.group(0) not in allowed_lower:
+                    sys.stderr.write(
+                        f"* Error in line {line_number + 1}: {line}\n  Not defined: {m.group(0)}\n"
+                    )
+                    exit(-1)
+
+            # Replace strings.
+            while m := r_string_index.match(line):
+                i = int(m.group(1))
+                line = line.replace(f"<<<{i}>>>", strings[i])
+
+            return f"{padding}{line}"
+
+        self.python = "\n".join(
+            to_python(line_number, line.strip())
+            for line_number, line in enumerate(lines)
+        )
+
+        if len(stack) > 0:
+            sys.stderr.write(
+                f"""* Error: incomplete structures; missing: {', '.join(f"end {s}" for s in stack)}\n"""
+            )
+            exit(-1)
+
+    def __call__(self) -> None:
+
+        try:
+            exec(self.python)
+
+        # except Exception:
+        except:
+            error_lines = traceback.format_exc().split("\n")
+            # Hack: "<string>", line 10
+            r_line = re.compile(r'.*"<string>", line ([0-9]+).*')
+
+            line_number = -1
+            for line in error_lines:
+                if m := r_line.match(line):
+                    line_number = int(m.group(1))
+                    linebreak = "\n"
+                    print(
+                        f"""* Error in line {line_number}:
+  {self.code.split(linebreak)[line_number - 1].strip()}
+  {error_lines[-2]}
+"""
+                    )
+            exit(-1)
+
+    def __str__(self) -> str:
+        return self.code
+
+
+def run():
+    def help():
+        print(
+            """
+To use:
+
+  python -m ibdp_classes [options] filename
+
+Options:
+
+  -md  Output markdown.
+  -py  Output intermediate Python code.
+
+"""
+        )
+        exit(0)
+
+    if len(sys.argv) < 2:
+        help()
+
+    md = "-md" in sys.argv
+    py = "-py" in sys.argv
+    try:
+        file_name = sys.argv[-1]
+    except:
+        help()
+
+    with open(file_name) as f:
+        lines = [line for line in f]
+    code = "".join(lines)
+    pc = Pseudocode(code)
+
+    if md:
+        print("```")
+        print(pc)
+        print("```\n")
+
+    if md and py:
+        print("```python")
+    if py:
+        print(pc.python)
+    if md and py:
+        print("```\n")
+    if py and not md:
+        print("\n\n")
+
+    if md:
+        print("Output:\n\n```")
+    pc()
+    if md:
+        print("```")
+
+
+if __name__ == "__main__":
+    run()
