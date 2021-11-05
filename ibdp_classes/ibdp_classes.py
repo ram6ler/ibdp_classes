@@ -195,6 +195,8 @@ class Pseudocode:
                 "≥": ">=",
                 "=": "==",
                 "!==": "!=",
+                "<==": "<=",
+                ">==": ">=",
             }.items():
                 line = line.replace(c, r)
             if m := r_equals.match(line):
