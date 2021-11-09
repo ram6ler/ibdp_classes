@@ -41,10 +41,10 @@ class Array(_Base[T]):
         if isinstance(index, int):
             if 0 <= index < len(self._elements):
                 self._elements[index] = value
-
-            raise Exception("Array index out of bounds.")
-
-        raise Exception("Non integer Array index.")
+            else:
+                raise Exception("Array index out of bounds.")
+        else:
+            raise Exception("Non integer Array index.")
 
     def __getitem__(self, index: int) -> T:
         if isinstance(index, int):
