@@ -143,9 +143,9 @@ haystack = Array(20, -3, 5, 7, 2, 13, 12, 19)
 print("haystack:", haystack)
 
 print("5 is in haystack?")
-print(contains(5, HAYSTACK, 8))
+print(contains(5, haystack, 8))
 
 print("4 is in haystack?")
-print(contains(4, HAYSTACK, 8))
+print(contains(4, haystack, 8))
 ```
 
