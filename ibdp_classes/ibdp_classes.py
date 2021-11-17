@@ -7,7 +7,7 @@ T = TypeVar("T")
 
 
 class _Base(Generic[T]):
-    def __init__(self, elements: list[T]) -> None:
+    def __init__(self, *elements: T) -> None:
         self._elements = list(elements)
 
     def __str__(self) -> str:
@@ -34,8 +34,8 @@ class _KnowsIfEmpty(_Base[T]):
 class Array(_Base[T]):
     """A basic array structure that only allows random access."""
 
-    def __init__(self, elements: list[T]) -> None:
-        super().__init__(elements)
+    def __init__(self, *elements: T) -> None:
+        super().__init__(*elements)
 
     def __setitem__(self, index: int, value: T) -> None:
         if isinstance(index, int):
@@ -59,8 +59,8 @@ class Collection(_KnowsIfEmpty[T]):
     """A basic collection class that only supports methods `hasNext`,
     `getNext`, `resetNext`, `addItem` and `isEmpty`."""
 
-    def __init__(self, elements: list[T] = []) -> None:
-        super().__init__(elements)
+    def __init__(self, *elements: T) -> None:
+        super().__init__(*elements)
         self.index = 0
 
     def addItem(self, element: T) -> None:
@@ -92,8 +92,8 @@ class Stack(_KnowsIfEmpty[T]):
     """A basic collection class that only supports methods `push`,
     `pop` and `isEmpty`"""
 
-    def __init__(self, elements: list[T] = []) -> None:
-        super().__init__(elements)
+    def __init__(self, *elements: T) -> None:
+        super().__init__(*elements)
 
     def push(self, element: T) -> None:
         """Adds element `element` to the top of the stack."""
@@ -111,8 +111,8 @@ class Queue(_KnowsIfEmpty[T]):
     """A basic collection class that only supports methods `enqueue`,
     `dequeue` and `isEmpty`"""
 
-    def __init__(self, elements: list[T] = []) -> None:
-        super().__init__(elements)
+    def __init__(self, *elements: T) -> None:
+        super().__init__(*elements)
 
     def enqueue(self, element: T) -> None:
         """Adds element `element` to the back of the queue."""
@@ -139,12 +139,12 @@ class Pseudocode:
         r_while = re.compile(r"loop +while +(.*)")
         r_for = re.compile(r"loop +([A-Z][A-Z_0-9]*) +from +([^ ]+) +to +(.+)")
         r_end = re.compile(r"end +(.+)")
-        r_input_type = re.compile(r"input +([A-Z][A-Z_0-9]) +as +(.*)")
-        r_input = re.compile(r"input +([A-Z][A-Z_0-9])$")
+        r_input_type = re.compile(r"input +([A-Z][A-Z_0-9]*) +as +(.*)")
+        r_input = re.compile(r"input +([A-Z][A-Z_0-9]*)")
         r_output = re.compile(r"output +(.*)")
         r_function = re.compile(r"function +([A-Z][A-Z_0-9]*)\((.*)\)")
         r_procedure = re.compile(r"procedure +([A-Z][A-Z_0-9]*)\((.*)\)")
-        r_new = re.compile(f"^([A-Z][A-Z_0-9]*) += +new +([^(]+)\((.*)\)")
+        r_new = re.compile(r"new +(Array|Collection|Queue|Stack) *\(")
         r_string = re.compile(r'"([^"]*)"')
         r_string_index = re.compile(r"<<<([0-9]+)>>>")
         r_lower = re.compile(r"[a-z]+")
@@ -155,19 +155,11 @@ class Pseudocode:
             "and",
             "or",
             "not",
-            "procedure",
-            "function",
             "return",
             "if",
             "else",
-            "loop",
             "while",
-            "from",
-            "to",
-            "end",
-            "output",
             "input",
-            "as",
             "int",
             "float",
             "isEmpty",
@@ -217,6 +209,9 @@ class Pseudocode:
                 "FALSE": "False",
             }.items():
                 line = line.replace(s, r)
+
+            while m := r_new.search(line):
+                line = re.sub(r_new, r"\1(", line)
 
             if m := r_if.match(line):
                 stack.append("if")
@@ -270,10 +265,6 @@ class Pseudocode:
                 stack.append("procedure")
                 return f"{padding}def {m.group(1)}({m.group(2)}):"
 
-            if m := r_new.match(line):
-                elements = [s.strip() for s in m.group(3).split(",") if s]
-                return f"""{padding}{m.group(1)} = {m.group(2)}({"[" + ", ".join(elements) + "]" if elements else ""})"""
-
             # Remove strings.
             strings = list[str]()
             while m := r_string.match(line):
@@ -312,7 +303,6 @@ class Pseudocode:
         try:
             exec(self.python)
 
-        # except Exception:
         except:
             error_lines = traceback.format_exc().split("\n")
             # Hack: "<string>", line 10

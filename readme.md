@@ -27,7 +27,7 @@ end loop
 To interpret:
 
 ```
-python -m ibdp_classes < example.pseudocode
+python -m ibdp_classes example.pseudocode
 ```
 
 Output:
@@ -70,6 +70,8 @@ xs[ 4 ] =  5
 
 ## Additions to IB pseudocode
 
+### `function` and `procedure`
+
 In exams, IB pseudocode typically uses `output` to display results, and doesn't explicitly define functions or procedures. These are often useful constructs in programming tutorials, however, so I have also implemented `function` (to define expressions) and `procedure` (to define statements) structures. For example:
 
 ```text
@@ -105,6 +107,23 @@ True
 False
 ```
 
+### Input types using `as`
+
+In IBDP pseudocode, the keyword `input` is used to generically collect input from the user, and context is used to determine whether the input should be interpreted as a string, integer or floating point number. I have added `as int` and `as float` as appendages to the input statement for when we want to be explicit.
+
+For example:
+
+```
+output "Input an integer."
+input COUNT as int
+
+if COUNT mod 2 = 0 then
+    output COUNT, "is even..."
+else
+    output COUNT, "is odd..."
+end if
+```
+
 ## Using the classes within Python scripts
 
 The classed defined by IB can be used directly in Python scripts. For example:
@@ -120,7 +139,7 @@ def contains(needle: int, haystack: Array[int], n: int) -> bool:
             found = True
     return found
 
-haystack = Array([20, -3, 5, 7, 2, 13, 12, 19])
+haystack = Array(20, -3, 5, 7, 2, 13, 12, 19)
 print("haystack:", haystack)
 
 print("5 is in haystack?")
