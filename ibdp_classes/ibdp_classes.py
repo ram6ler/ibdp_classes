@@ -299,9 +299,10 @@ class Pseudocode:
             exit(-1)
 
     def __call__(self) -> None:
+        env = {**globals(), **locals()}
 
         try:
-            exec(self.python)
+            exec(self.python, env, env)
 
         except:
             error_lines = traceback.format_exc().split("\n")

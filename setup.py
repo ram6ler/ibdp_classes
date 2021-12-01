@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ibdp_classes",
-    version="0.2.8",
+    version="0.2.9",
     description="A interpreter and class implementation for pseudocode that may be used in IBDP Computer Science exams",
     long_description=(pathlib.Path(__file__).parent / "readme.md").read_text(),
     long_description_content_type="text/markdown",
