@@ -3,4 +3,5 @@ dist
 build
 ibdp_classes.egg-info
 __pycache__
+.mypy_cache
 .vscode

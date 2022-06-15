@@ -52,7 +52,7 @@ Options:
 
     if md:
         print("Output:\n\n```")
-    pc()
+    print(pc())
     if md:
         print("```")
 

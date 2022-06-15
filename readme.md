@@ -54,7 +54,8 @@ end loop
 """
 
 script = ib.Pseudocode(code)
-script()
+output = script()
+print(output)
 ```
 
 Output:
@@ -66,6 +67,39 @@ xs[ 1 ] =  2
 xs[ 2 ] =  3
 xs[ 3 ] =  4
 xs[ 4 ] =  5
+```
+
+If we would like to give the pseudocode access to already defined variables or functions, we can pass the definitions via a dictionary:
+
+```python
+from random import random
+from math import floor
+import ibdp_classes as ib
+
+code = """
+loop I from 1 to 10
+    output I, ":", FLOOR(10 * RANDOM())
+end loop
+"""
+
+script = ib.Pseudocode(code)
+output = script({"FLOOR": floor, "RANDOM": random})
+print(output)
+```
+
+Example output:
+
+```text
+1 : 5
+2 : 1
+3 : 9
+4 : 9
+5 : 7
+6 : 0
+7 : 4
+8 : 1
+9 : 7
+10 : 0
 ```
 
 ## Additions to IB pseudocode

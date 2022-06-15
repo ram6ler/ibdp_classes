@@ -2,6 +2,8 @@
 
 import re, sys, traceback
 from typing import Generic, TypeVar
+from contextlib import redirect_stdout
+from io import StringIO
 
 T = TypeVar("T")
 
@@ -42,17 +44,17 @@ class Array(_Base[T]):
             if 0 <= index < len(self._elements):
                 self._elements[index] = value
             else:
-                raise Exception("Array index out of bounds.")
+                raise IndexError("Array index out of bounds.")
         else:
-            raise Exception("Non integer Array index.")
+            raise IndexError("Non integer Array index.")
 
     def __getitem__(self, index: int) -> T:
         if isinstance(index, int):
             if 0 <= index < len(self._elements):
                 return self._elements[index]
 
-            raise Exception("Array index out of bounds.")
-        raise Exception("Non integer Array index.")
+            raise IndexError("Array index out of bounds.")
+        raise IndexError("Non integer Array index.")
 
 
 class Collection(_KnowsIfEmpty[T]):
@@ -210,7 +212,7 @@ class Pseudocode:
             }.items():
                 line = line.replace(s, r)
 
-            while m := r_new.search(line):
+            while r_new.search(line):
                 line = re.sub(r_new, r"\1(", line)
 
             if m := r_if.match(line):
@@ -223,7 +225,7 @@ class Pseudocode:
                     exit(-1)
                 return special(f"{padding}if {m.group(1)}:")
 
-            if m := r_else.match(line):
+            if r_else.match(line):
                 if line != "else":
                     sys.stderr.write(
                         f"""* Error in line {line_number + 1}: '{line}'\n  Keyword 'else' should be on its own\n"""
@@ -298,29 +300,29 @@ class Pseudocode:
             )
             exit(-1)
 
-    def __call__(self) -> None:
-        env = {**globals(), **locals()}
+    def __call__(self, access: dict[str, object] = {}) -> str:
+        env = {**globals(), **locals(), **access}
+        s = StringIO()
+        with redirect_stdout(s):
+            try:
+                exec(self.python, env, env)
+            except:
+                error_lines = traceback.format_exc().split("\n")
+                # Hack: "<string>", line 10
+                r_line = re.compile(r'.*"<string>", line ([0-9]+).*')
 
-        try:
-            exec(self.python, env, env)
-
-        except:
-            error_lines = traceback.format_exc().split("\n")
-            # Hack: "<string>", line 10
-            r_line = re.compile(r'.*"<string>", line ([0-9]+).*')
-
-            line_number = -1
-            for line in error_lines:
-                if m := r_line.match(line):
-                    line_number = int(m.group(1))
-                    linebreak = "\n"
-                    print(
-                        f"""* Error in line {line_number}:
-  {self.code.split(linebreak)[line_number - 1].strip()}
-  {error_lines[-2]}
-"""
-                    )
-            exit(-1)
+                line_number = -1
+                for line in error_lines:
+                    if m := r_line.match(line):
+                        line_number = int(m.group(1))
+                        linebreak = "\n"
+                        print(
+                            f"""* Error in line {line_number}:
+    {self.code.split(linebreak)[line_number - 1].strip()}
+    {error_lines[-2]}
+    """
+                        )
+        return s.getvalue()
 
     def __str__(self) -> str:
         return self.code
