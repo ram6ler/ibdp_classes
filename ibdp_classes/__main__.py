@@ -36,6 +36,11 @@ Options:
     code = "".join(lines)
     pc = Pseudocode(code)
 
+    # If it is interactive, just run.
+    if any(["input " in line for line in lines]):
+        exec(pc.python)
+        exit(0)
+
     if md:
         print("```")
         print(pc)

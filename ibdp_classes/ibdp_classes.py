@@ -135,11 +135,12 @@ class Pseudocode:
     def __init__(self, code: str) -> None:
         self.code = code
         lines = [line for line in code.split("\n")]
-        r_logic = re.compile(r" AND | OR | NOT ")
-        r_if = re.compile(r"if +(.*) +then")
+        r_logic = re.compile(r"( AND | OR | NOT )")
+        r_if = re.compile(r"if +(.+) +then")
         r_else = re.compile(r"else")
-        r_while = re.compile(r"loop +while +(.*)")
-        r_for = re.compile(r"loop +([A-Z][A-Z_0-9]*) +from +([^ ]+) +to +(.+)")
+        r_while = re.compile(r"loop +while +(.+)")
+        r_for = re.compile(r"loop +([A-Z][A-Z_0-9]*) +from +")
+        r_to = re.compile(r"(.+) +to +(.+)")
         r_end = re.compile(r"end +(.+)")
         r_input_type = re.compile(r"input +([A-Z][A-Z_0-9]*) +as +(.*)")
         r_input = re.compile(r"input +([A-Z][A-Z_0-9]*)")
@@ -239,7 +240,15 @@ class Pseudocode:
 
             if m := r_for.match(line):
                 stack.append("loop")
-                return f"{padding}for {m.group(1)} in range({m.group(2)}, {m.group(3)} + 1):"
+                variable = m.group(1)
+                if not (m := r_to.match(line.split("from")[1])):
+                    sys.stderr.write(
+                        f"* Error in line {line_number + 1}: '{line}'\n  incorrect loop from expression.\n"
+                    )
+                    exit(-1)
+                start, stop = m.group(1), m.group(2)
+                return f"{padding}for {variable} in range({start}, {stop} + 1):"
+                # return f"{padding}for {m.group(1)} in range({m.group(2)}, {m.group(3)} + 1):"
 
             if m := r_end.match(line):
                 pop = stack.pop()
@@ -315,10 +324,10 @@ class Pseudocode:
                 for line in error_lines:
                     if m := r_line.match(line):
                         line_number = int(m.group(1))
-                        linebreak = "\n"
+                        line_break = "\n"
                         print(
                             f"""* Error in line {line_number}:
-    {self.code.split(linebreak)[line_number - 1].strip()}
+    {self.code.split(line_break)[line_number - 1].strip()}
     {error_lines[-2]}
     """
                         )
