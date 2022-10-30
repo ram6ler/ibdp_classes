@@ -135,7 +135,12 @@ class Pseudocode:
     def __init__(self, code: str) -> None:
         self.code = code
         lines = [line for line in code.split("\n")]
-        r_logic = re.compile(r"( AND | OR | NOT )")
+        # Hack to fix IB using uppercase for logic keywords!
+        replacer = [
+            re.compile(f"([^A-Za-z])({upper})([^A-Za-z])")
+            for upper in ("AND", "OR", "NOT")
+        ]
+
         r_if = re.compile(r"if +(.+) +then")
         r_else = re.compile(r"else")
         r_while = re.compile(r"loop +while +(.+)")
@@ -182,7 +187,7 @@ class Pseudocode:
         stack = list[str]()
 
         # Replace special symbols and work around IB's choice to use the same
-        # symbol for instantiation and equality.
+        # symbol for instantiation and equality!
         def special(line: str) -> str:
             for c, r in {
                 "≠": "!=",
@@ -200,8 +205,18 @@ class Pseudocode:
 
         def to_python(line_number: int, line: str) -> str:
             padding = "  " * len(stack)
-            while m := r_logic.match(line):
-                line = line.replace(m.group(1), m.group(1).lower())
+            # while m := r_logic.match(line):
+            #     line = line.replace(m.group(1), m.group(1).lower())
+            for k in replacer:
+                while m := k.search(line):
+                    found = m.group(0)
+                    replace = f"{m.group(1)}{m.group(2).lower()}{m.group(3)}"
+                    print(line)
+                    print("found:", found)
+                    print("replace:", replace)
+                    line = line.replace(found, replace)
+                    print("result:", line)
+
             for s, r in {
                 "//": "#",
                 " div ": " // ",
