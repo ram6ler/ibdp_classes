@@ -153,7 +153,7 @@ class Pseudocode:
         r_function = re.compile(r"function +([A-Z][A-Z_0-9]*)\((.*)\)")
         r_procedure = re.compile(r"procedure +([A-Z][A-Z_0-9]*)\((.*)\)")
         r_new = re.compile(r"new +(Array|Collection|Queue|Stack) *\(")
-        r_string = re.compile(r'"([^"]*)"')
+        r_string = re.compile(r'("[^"]*")')
         r_string_index = re.compile(r"<<<([0-9]+)>>>")
         r_lower = re.compile(r"[a-z]+")
         r_equals = re.compile(r"==+")
@@ -295,6 +295,7 @@ class Pseudocode:
             strings = list[str]()
             while m := r_string.match(line):
                 i = len(strings)
+                strings.append(m.group(1))
                 line = line.replace(m.group(1), f"<<<{i}>>>")
 
             start = 0
