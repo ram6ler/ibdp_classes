@@ -8,6 +8,12 @@ Under the hood, the classes are simple wrappers over a Python list and the inter
 
 You can submit [issues and requests here](https://github.com/ram6ler/ibdp_classes/issues).
 
+## Install
+
+```
+python3 -m pip install ibdp-classes
+````
+
 
 ## Interpreting IB pseudocode
 
