@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ibdp_classes"
+version = "0.5.0"
+authors = [
+  { name="Richard Ambler", email="rambler@wya.top" },
+]
+description = "An interpreter for pseudocode similar to that used in IBDP Computer Science courses."
+readme = "readme.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ram6ler/ibdp_classes/tree/trunk"
+"Bug Tracker" = "https://github.com/ram6ler/ibdp_classes/issues"
+

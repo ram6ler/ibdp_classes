@@ -4,22 +4,22 @@ The IB Computer Science documents, *Approved notation for developing pseudocode*
 
 This is a simple Python implementation of an IB pseudocode interpreter and the above restrictive classes, which can be used in programming activities to help familiarize students with the pseudocode and classes.
 
-Under the hood, the classes are simple wrappers over a Python list and the interpreter simply runs some perfunctory tests, translates pseudocode into Python (with a heavy, ugly accent) and then does its best to execute the translation and report helpful error messages. 
+Under the hood, the classes are simple wrappers over a Python list and the interpreter simply runs some perfunctory tests, translates pseudocode into (really ugly) Python and then does its best to execute the translation and generate helpful error messages.
 
 You can submit [issues and requests here](https://github.com/ram6ler/ibdp_classes/issues).
 
 ## Install
 
 ```
-python3 -m pip install ibdp-classes
+python -m pip install ibdp-classes
 ````
-
 
 ## Interpreting IB pseudocode
 
 We can use the library to interpret pseudocode. For example:
 
 `example.pseudocode`
+
 ```text
 output "Collection..."
 ITEMS = new Collection(1, 2, 3)
@@ -45,7 +45,7 @@ X = 2
 X = 3
 ```
 
-We can also interpret IB pseudocode from within a Python script. For example:
+We can also interpret IB pseudocode from within a Python script by creating and calling a `Pseudocode` instance. For example:
 
 ```python
 import ibdp_classes as ib
@@ -75,7 +75,9 @@ xs[ 3 ] =  4
 xs[ 4 ] =  5
 ```
 
-If we would like to give the pseudocode access to already defined variables or functions, we can pass the definitions via a dictionary:
+## Importing functionality
+
+If we would like to give the pseudocode access to variables or functions defined in Python, we can pass the definitions as a dictionary when calling the `Pseudocode` instance:
 
 ```python
 from random import random
@@ -108,11 +110,54 @@ Example output:
 10 : 0
 ```
 
+Alternatively, we can have the pseudocode in its own file and the definitions we want available in a separate Python file, and then set `-defs` to the name of the Python file when we interpret the pseudocode from the command line. For example:
+
+`defs.py`
+
+```python
+from random import random
+from math import floor
+
+RANDOM = random
+FLOOR = floor
+```
+
+`example.pseudo`
+
+```text
+loop I from 1 to 10
+    output I, ":", FLOOR(10 * RANDOM())
+end loop
+```
+
+From the command line:
+
+```text
+python -m ibdp_classes -defs defs.py example.pseudo
+```
+
+Example output:
+
+```text
+1 : 5
+2 : 8
+3 : 4
+4 : 3
+5 : 1
+6 : 5
+7 : 3
+8 : 2
+9 : 3
+10 : 5
+```
+
 ## Additions to IB pseudocode
 
 ### `function` and `procedure`
 
-In exams, IB pseudocode typically uses `output` to display results, and doesn't explicitly define functions or procedures. These are often useful constructs in programming tutorials, however, so I have also implemented `function` (to define expressions) and `procedure` (to define statements) structures. For example:
+In exams, IB pseudocode typically uses `output` to display results, and either doesn't explicitly define functions or procedures, or else does so informally and inconsistently. I have thus added `function` and `procedure` structures to the pseudocode definitions.
+
+For example:
 
 ```text
 function CONTAINS(NEEDLE, HAYSTACK, N)
@@ -166,7 +211,9 @@ end if
 
 ## Using the classes within Python scripts
 
-The classed defined by IB can be used directly in Python scripts. For example:
+The classed defined by IB can be used directly in Python scripts. While there is not much of a use case for this, it might be helpful as an intermediate step in actually implementing pseudocode.
+
+For example:
 
 ```python
 from ibdp_classes import Array
@@ -188,4 +235,3 @@ print(contains(5, haystack, 8))
 print("4 is in haystack?")
 print(contains(4, haystack, 8))
 ```
-

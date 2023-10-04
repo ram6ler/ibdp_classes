@@ -5,3 +5,6 @@ ibdp_classes.egg-info
 __pycache__
 .mypy_cache
 .vscode
+.DS_Store
+
+play*

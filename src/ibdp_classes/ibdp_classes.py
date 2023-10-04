@@ -1,16 +1,13 @@
-#! python3
-
-import re, sys, traceback
-from typing import Generic, TypeVar
+import re
+import sys
+import traceback
 from contextlib import redirect_stdout
 from io import StringIO
 
-T = TypeVar("T")
 
-
-class _Base(Generic[T]):
+class _Base[T]:
     def __init__(self, *elements: T) -> None:
-        self._elements = list(elements)
+        self._elements: list[T] = list(elements)
 
     def __str__(self) -> str:
         if len(self._elements) and isinstance(self._elements[0], str):
@@ -19,7 +16,13 @@ class _Base(Generic[T]):
             template = "[ELEMENT]"
         elements = (
             "{ "
-            + ", ".join(template.replace("[ELEMENT]", str(x)) for x in self._elements)
+            + ", ".join(
+                template.replace(
+                    "[ELEMENT]",
+                    str(x),
+                )
+                for x in self._elements
+            )
             + " }"
             if self._elements
             else "(empty)"
@@ -27,13 +30,13 @@ class _Base(Generic[T]):
         return f"{type(self).__name__} {elements}"
 
 
-class _KnowsIfEmpty(_Base[T]):
+class _KnowsIfEmpty[T](_Base[T]):
     def isEmpty(self) -> bool:
         """Returns whether the structure contains any elements."""
         return not self._elements
 
 
-class Array(_Base[T]):
+class Array[T](_Base[T]):
     """A basic array structure that only allows random access."""
 
     def __init__(self, *elements: T) -> None:
@@ -57,7 +60,7 @@ class Array(_Base[T]):
         raise IndexError("Non integer Array index.")
 
 
-class Collection(_KnowsIfEmpty[T]):
+class Collection[T](_KnowsIfEmpty[T]):
     """A basic collection class that only supports methods `hasNext`,
     `getNext`, `resetNext`, `addItem` and `isEmpty`."""
 
@@ -90,7 +93,7 @@ class Collection(_KnowsIfEmpty[T]):
         return self.index < len(self._elements)
 
 
-class Stack(_KnowsIfEmpty[T]):
+class Stack[T](_KnowsIfEmpty[T]):
     """A basic collection class that only supports methods `push`,
     `pop` and `isEmpty`"""
 
@@ -109,7 +112,7 @@ class Stack(_KnowsIfEmpty[T]):
         raise Exception("Tried popping an empty stack.")
 
 
-class Queue(_KnowsIfEmpty[T]):
+class Queue[T](_KnowsIfEmpty[T]):
     """A basic collection class that only supports methods `enqueue`,
     `dequeue` and `isEmpty`"""
 
@@ -130,7 +133,7 @@ class Queue(_KnowsIfEmpty[T]):
 
 
 class Pseudocode:
-    """A simple IBDP pseudocode interpreter."""
+    """A simple DP Computer Science pseudocode interpreter."""
 
     def __init__(self, code: str) -> None:
         self.code = code
@@ -205,8 +208,6 @@ class Pseudocode:
 
         def to_python(line_number: int, line: str) -> str:
             padding = "  " * len(stack)
-            # while m := r_logic.match(line):
-            #     line = line.replace(m.group(1), m.group(1).lower())
             for k in replacer:
                 while m := k.search(line):
                     found = m.group(0)
@@ -236,7 +237,8 @@ class Pseudocode:
                 check = line.split("then")
                 if len(check) != 2 or check[1].strip():
                     sys.stderr.write(
-                        f"* Error in line {line_number + 1}: '{line}'\n  Should be if the form: if [condition] then"
+                        f"* Error in line {line_number + 1}: '{line}'\n"
+                        "Should be if the form: if [condition] then"
                     )
                     exit(-1)
                 return special(f"{padding}if {m.group(1)}:")
@@ -244,7 +246,8 @@ class Pseudocode:
             if r_else.match(line):
                 if line != "else":
                     sys.stderr.write(
-                        f"""* Error in line {line_number + 1}: '{line}'\n  Keyword 'else' should be on its own\n"""
+                        f"""* Error in line {line_number + 1}: '{line}'\n"
+                        "Keyword 'else' should be on its own\n"""
                     )
                     exit(-1)
                 return f"{padding[0:-2]}else:"
@@ -258,18 +261,19 @@ class Pseudocode:
                 variable = m.group(1)
                 if not (m := r_to.match(line.split("from")[1])):
                     sys.stderr.write(
-                        f"* Error in line {line_number + 1}: '{line}'\n  incorrect loop from expression.\n"
+                        f"* Error in line {line_number + 1}: '{line}'\n"
+                        "incorrect loop from expression.\n"
                     )
                     exit(-1)
                 start, stop = m.group(1), m.group(2)
                 return f"{padding}for {variable} in range({start}, {stop} + 1):"
-                # return f"{padding}for {m.group(1)} in range({m.group(2)}, {m.group(3)} + 1):"
 
             if m := r_end.match(line):
                 pop = stack.pop()
                 if pop != m.group(1):
                     sys.stderr.write(
-                        f"* Error in line {line_number + 1}: '{line}'\n  Expecting: end {pop}\n"
+                        f"* Error in line {line_number + 1}: '{line}'\n"
+                        "Expecting: end {pop}\n"
                     )
                     exit(-1)
                 return ""
@@ -303,7 +307,8 @@ class Pseudocode:
                 start = m.end()
                 if m.group(0) not in allowed_lower:
                     sys.stderr.write(
-                        f"* Error in line {line_number + 1}: {line}\n  Not defined: {m.group(0)}\n"
+                        f"* Error in line {line_number + 1}: {line}\n"
+                        "Not defined: {m.group(0)}\n"
                     )
                     exit(-1)
 
@@ -321,7 +326,8 @@ class Pseudocode:
 
         if len(stack) > 0:
             sys.stderr.write(
-                f"""* Error: incomplete structures; missing: {', '.join(f"end {s}" for s in stack)}\n"""
+                f"* Error: incomplete structures; "
+                f"""missing: {', '.join(f"end {s}" for s in stack)}\n"""
             )
             exit(-1)
 

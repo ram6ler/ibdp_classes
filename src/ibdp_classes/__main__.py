@@ -1,5 +1,11 @@
 import sys
-from .ibdp_classes import Pseudocode
+from .ibdp_classes import (
+    Array,
+    Collection,
+    Pseudocode,
+    Queue,
+    Stack,
+)
 
 
 def run():
@@ -12,8 +18,9 @@ To use:
 
 Options:
 
-  -md  Output markdown.
-  -py  Output intermediate Python code.
+  -md           Output markdown.
+  -py           Output intermediate Python code.
+  -defs [file]  Include definitions implemented in Python.
 
 """
         )
@@ -25,6 +32,19 @@ Options:
     md = "-md" in sys.argv
     py = "-py" in sys.argv
 
+    if "-defs" in sys.argv:
+        i = sys.argv.index("-defs") + 1
+        if i == len(sys.argv):
+            help()
+        try:
+            with open(sys.argv[i]) as f:
+                defs = f.read()
+        except:
+            print("Check option -def; example: -def defs.py")
+            help()
+    else:
+        defs = ""
+
     file_name = sys.argv[-1]
 
     try:
@@ -35,8 +55,9 @@ Options:
 
     code = "".join(lines)
     pc = Pseudocode(code)
+    pc.python = f"{defs}\n{pc.python}"
 
-    # If it is interactive, just run.
+    # If it is interactive, just run (ignores options).
     if any(["input " in line for line in lines]):
         exec(pc.python)
         exit(0)
