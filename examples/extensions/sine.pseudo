@@ -1,0 +1,8 @@
+// python -m ibdp_classes -ext 'strings math' examples/extensions/sine.pseudo
+A = 30
+N = 20
+
+loop I from 0 to N - 1
+    SPACES = (A * (SIN(I * 2 * PI / N) + 1))
+    output REPEAT(" ", SPACES), "*"
+end loop

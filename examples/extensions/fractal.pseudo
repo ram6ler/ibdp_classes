@@ -1,0 +1,37 @@
+// python -m ibdp_classes -ext turtle examples/extensions/fractal.pseudo  
+
+procedure FRACTAL(LENGTH, DEPTH)
+    DISTANCE = LENGTH / 3
+    if DEPTH = 0 then
+        GO_FORWARD(DISTANCE)
+        TURN_LEFT(60)
+        GO_FORWARD(DISTANCE)
+        TURN_RIGHT(120)
+        GO_FORWARD(DISTANCE)
+        TURN_LEFT(60)
+        GO_FORWARD(DISTANCE)
+    else
+        FRACTAL(DISTANCE, DEPTH - 1)
+        TURN_LEFT(60)
+        FRACTAL(DISTANCE, DEPTH - 1)
+        TURN_RIGHT(120)
+        FRACTAL(DISTANCE, DEPTH - 1)
+        TURN_LEFT(60)
+        FRACTAL(DISTANCE, DEPTH - 1)
+    end if
+end procedure
+
+WIDTH = 600
+Y = -250
+
+loop DEPTH from 1 to 3
+   PEN_UP()
+   SET_X(-WIDTH / 2)
+   SET_Y(Y)
+   PEN_DOWN()
+   FRACTAL(WIDTH, DEPTH)
+   Y = Y + 200
+end loop
+
+HIDE_TURTLE()
+WAIT()
